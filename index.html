@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Image Alchemy - Advanced Search App</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+*{box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{margin:0;background:#f6f6f9;color:#333;}
+header{text-align:center;padding:30px 10px;background:linear-gradient(135deg,#4e54c8,#8f94fb);color:#fff;position:relative;}
+header h1{font-size:2rem;margin-bottom:10px;}
+header p{font-size:0.9rem;opacity:0.8;}
+.top-btn{position:absolute;top:15px;right:20px;background:#fff;color:#4e54c8;border:none;padding:10px 20px;border-radius:25px;cursor:pointer;font-weight:600;transition:.3s;}
+.top-btn:hover{background:#4e54c8;color:#fff;}
+#logoutBtn{display:none;}
+.user-info{margin-top:10px;font-size:0.9rem;}
+.login-popup{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);justify-content:center;align-items:center;z-index:1000;}
+.login-box{background:#fff;padding:30px;border-radius:15px;text-align:center;width:90%;max-width:350px;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+.login-box h2{margin-bottom:20px;color:#4e54c8;}
+.login-box input{width:90%;padding:10px;margin:10px 0;border-radius:25px;border:1px solid #ccc;outline:none;text-align:center;}
+.login-box button{margin-top:10px;background:#4e54c8;color:#fff;border:none;padding:10px 25px;border-radius:25px;cursor:pointer;font-weight:600;}
+.login-box button:hover{background:#6c72f5;}
+.slideshow{position:relative;width:100%;max-width:1000px;height:400px;margin:20px auto;overflow:hidden;border-radius:15px;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+.slideshow img{position:absolute;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1s ease-in-out;}
+.slideshow img.active{opacity:1;}
+.slide-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.4);color:#fff;border:none;padding:10px 15px;border-radius:50%;cursor:pointer;font-size:18px;}
+.prev-btn{left:10px;}
+.next-btn{right:10px;}
+.search-bar{display:flex;justify-content:center;margin-top:15px;}
+.search-bar input{width:60%;max-width:500px;padding:12px 20px;border-radius:30px;border:none;outline:none;font-size:1rem;box-shadow:0 4px 8px rgba(0,0,0,.1);}
+.search-bar button{margin-left:10px;padding:12px 20px;border:none;background:#fff;border-radius:25px;cursor:pointer;font-weight:600;color:#4e54c8;transition:.3s;}
+.search-bar button:hover{background:#4e54c8;color:#fff;}
+#gallery{column-count:4;column-gap:15px;padding:20px;max-width:1300px;margin:auto;}
+@media(max-width:1000px){#gallery{column-count:3;}}
+@media(max-width:700px){#gallery{column-count:2;}}
+@media(max-width:480px){#gallery{column-count:1;}}
+.photo{position:relative;margin-bottom:15px;border-radius:10px;overflow:hidden;cursor:zoom-in;}
+.photo img{width:100%;display:block;border-radius:10px;transition:transform .3s ease;}
+.photo:hover img{transform:scale(1.05);}
+.photo-info{position:absolute;bottom:0;left:0;right:0;padding:10px;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff;display:flex;justify-content:space-between;align-items:center;font-size:.8rem;gap:10px;flex-wrap:wrap;}
+.photo-info button{background:rgba(255,255,255,.2);border:none;padding:5px 10px;border-radius:5px;color:#fff;cursor:pointer;}
+.photo-info button:hover{background:rgba(255,255,255,.4);}
+.load-more{display:none;margin:20px auto;padding:12px 25px;border-radius:25px;background:#4e54c8;color:#fff;border:none;cursor:pointer;font-weight:500;}
+.loading{text-align:center;font-size:1rem;margin-top:15px;color:#4e54c8;}
+footer{text-align:center;padding:20px;font-size:.8rem;color:#555;}
+/* ============= NEW GEO CSS ============= */
+.ip-geo-info {
+  text-align:center;
+  font-size:0.92rem;
+  background:#e1e7fa;
+  color:#31438e;
+  padding:4px 0 4px 0;
+  margin-bottom:8px;
+  margin-top:0;
+  letter-spacing:0.01em;
+  box-shadow: 0 1px 4px rgba(100,100,200,0.07);
+  font-weight:500;
+  border-bottom:1px solid #c4d8fc;
+}
+</style>
+</head>
+<body>
+<header>
+  <button class="top-btn" id="loginBtn">Login</button>
+  <button class="top-btn" id="logoutBtn">Logout</button>
+  <h1>Image Alchemy</h1>
+  <p>Search and explore millions of photos from Unsplash</p>
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search for photos..." />
+    <button id="searchBtn">Search</button>
+  </div>
+  <div class="user-info" id="userInfo"></div>
+</header>
+
+<!-- IP Geolocation Info Box (ADDED) -->
+<div id="ipGeoInfo" class="ip-geo-info"></div>
+
+<div class="login-popup" id="loginPopup">
+  <div class="login-box">
+    <h2>User Login</h2>
+    <input type="text" id="username" placeholder="Enter Username" />
+    <input type="password" id="password" placeholder="Enter Password" />
+    <button id="submitLogin">Login</button>
+  </div>
+</div>
+
+<section class="slideshow" id="slideshow">
+  <button class="slide-btn prev-btn" id="prevBtn">❮</button>
+  <button class="slide-btn next-btn" id="nextBtn">❯</button>
+</section>
+
+<section id="gallery"></section>
+<div class="loading" id="loadingMsg"></div>
+<button class="load-more" id="loadMoreBtn">Show More</button>
+<footer>Built by Image Alchemy | Powered by Unsplash API</footer>
+
+<script>
+const accessKey="kpTk6w_8M5_rfyvKdNgEyzkZTQEEkzvdOMFsk9Ti2c0";
+
+const loginBtn=document.getElementById("loginBtn");
+const logoutBtn=document.getElementById("logoutBtn");
+const loginPopup=document.getElementById("loginPopup");
+const submitLogin=document.getElementById("submitLogin");
+const userInfo=document.getElementById("userInfo");
+const usernameInput=document.getElementById("username");
+const passwordInput=document.getElementById("password");
+
+let loggedIn=false;
+let searchCount=0;
+
+// === LOGIN / LOGOUT ===
+loginBtn.addEventListener("click",()=>{loginPopup.style.display="flex";});
+submitLogin.addEventListener("click",()=>{
+  const username=usernameInput.value.trim();
+  const password=passwordInput.value.trim();
+  if(!username||!password){alert("Please enter username and password!");return;}
+  loggedIn=true;
+  loginPopup.style.display="none";
+  loginBtn.style.display="none";
+  logoutBtn.style.display="block";
+  getLocation(username);
+});
+logoutBtn.addEventListener("click",()=>{
+  loggedIn=false;
+  searchCount=0;
+  userInfo.textContent="";
+  logoutBtn.style.display="none";
+  loginBtn.style.display="block";
+  searchInput.value="";
+  gallery.innerHTML="";
+  slideshow.style.display="block"; // show slideshow again on logout
+  alert("You have successfully logged out!");
+});
+
+async function getLocation(username){
+  if(!navigator.geolocation){
+    userInfo.textContent=`Welcome ${username}! (Location not supported)`;
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const {latitude,longitude}=pos.coords;
+    try{
+      const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
+      const data=await res.json();
+      const city=data.address.city||data.address.town||data.address.village||"Unknown area";
+      const country=data.address.country||"";
+      userInfo.textContent=`👋 Welcome ${username}`;
+    }catch{
+      userInfo.textContent=`👋 Welcome ${username}! (Couldn’t fetch location)`;
+    }
+  },()=>{userInfo.textContent=`👋 Welcome ${username}! (Location denied)`;});
+}
+
+// === SLIDESHOW ===
+const slideshow=document.getElementById("slideshow");
+const prevBtn=document.getElementById("prevBtn");
+const nextBtn=document.getElementById("nextBtn");
+let slideImages=[],slideIndex=0;
+
+async function loadSlideshowImages(){
+  const url=`https://api.unsplash.com/photos/random?count=5&client_id=${accessKey}`;
+  try{
+    const res=await fetch(url);
+    const data=await res.json();
+    slideImages=data.map(img=>img.urls.regular);
+    renderSlideshow();
+  }catch(e){console.error("Failed to load slideshow",e);}
+}
+function renderSlideshow(){
+  slideshow.querySelectorAll("img").forEach(img=>img.remove());
+  slideImages.forEach((src,i)=>{
+    const img=document.createElement("img");
+    img.src=src;
+    if(i===0)img.classList.add("active");
+    slideshow.appendChild(img);
+  });
+  startSlideshow();
+}
+function startSlideshow(){
+  const imgs=slideshow.querySelectorAll("img");
+  if(imgs.length===0)return;
+  setInterval(()=>{
+    imgs[slideIndex].classList.remove("active");
+    slideIndex=(slideIndex+1)%imgs.length;
+    imgs[slideIndex].classList.add("active");
+  },4000);
+}
+prevBtn.addEventListener("click",()=>changeSlide(-1));
+nextBtn.addEventListener("click",()=>changeSlide(1));
+function changeSlide(dir){
+  const imgs=slideshow.querySelectorAll("img");
+  if(imgs.length===0)return;
+  imgs[slideIndex].classList.remove("active");
+  slideIndex=(slideIndex+dir+imgs.length)%imgs.length;
+  imgs[slideIndex].classList.add("active");
+}
+
+// === IMAGE SEARCH ===
+const gallery=document.getElementById("gallery");
+const searchInput=document.getElementById("searchInput");
+const searchBtn=document.getElementById("searchBtn");
+const loadMoreBtn=document.getElementById("loadMoreBtn");
+const loadingMsg=document.getElementById("loadingMsg");
+let currentQuery="",currentPage=1;
+
+async function searchImages(query,page=1){
+  const endpoint=`https://api.unsplash.com/search/photos?page=${page}&query=${encodeURIComponent(query)}&per_page=20&client_id=${accessKey}`;
+  try{
+    loadingMsg.textContent="Loading...";
+    const res=await fetch(endpoint);
+    const data=await res.json();
+    loadingMsg.textContent="";
+    return data.results;
+  }catch{
+    loadingMsg.textContent="Error loading images 😢";
+    return[];
+  }
+}
+function renderImages(images,append=false){
+  if(!append)gallery.innerHTML="";
+  if(images.length===0){
+    gallery.innerHTML="<p style='text-align:center;color:#777;'>No results found.</p>";
+    loadMoreBtn.style.display="none";
+    return;
+  }
+  images.forEach(img=>{
+    const div=document.createElement("div");
+    div.className="photo";
+    div.innerHTML=`
+      <img src="${img.urls.small}" alt="${img.alt_description||"photo"}" loading="lazy">
+      <div class="photo-info">
+        <span>${img.user.name}</span>
+        <div>
+          <button onclick="window.open('${img.links.html}','_blank')">View</button>
+          <button onclick="downloadImage('${img.urls.full}')">Download</button>
+        </div>
+      </div>`;
+    gallery.appendChild(div);
+  });
+  loadMoreBtn.style.display="block";
+}
+
+async function downloadImage(url){
+  try{
+    const res=await fetch(url);
+    const blob=await res.blob();
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="image.jpg";
+    a.click();
+  }catch{alert("Failed to download image.");}
+}
+
+searchBtn.addEventListener("click",handleSearch);
+searchInput.addEventListener("keypress",e=>{if(e.key==="Enter")handleSearch();});
+
+// === Show slideshow again if input is cleared ===
+searchInput.addEventListener("input",()=>{
+  if(searchInput.value.trim()===""){
+    gallery.innerHTML="";
+    loadMoreBtn.style.display="none";
+    slideshow.style.display="block";
+  }
+});
+
+loadMoreBtn.addEventListener("click",loadMore);
+
+async function handleSearch(){
+  const query=searchInput.value.trim();
+  if(!query){
+    slideshow.style.display="block";
+    gallery.innerHTML="";
+    return;
+  }
+  // hide slideshow when searching
+  slideshow.style.display="none";
+  
+  if(!loggedIn){
+    if(searchCount>=3){
+      alert("You have reached the free search limit! Please log in to continue.");
+      loginPopup.style.display="flex";
+      return;
+    }
+    searchCount++;
+  }
+  currentQuery=query;currentPage=1;
+  const results=await searchImages(query);
+  renderImages(results);
+}
+
+async function loadMore(){
+  currentPage++;
+  const results=await searchImages(currentQuery,currentPage);
+  renderImages(results,true);
+}
+
+loadSlideshowImages();
+
+// === IP-BASED GEOLOCATION (ADDED FEATURE) ===
+async function fetchIPGeolocation() {
+  try {
+    const resp = await fetch('https://ipapi.co/json/');
+    const geo = await resp.json();
+    let ipGeoDiv = document.getElementById("ipGeoInfo");
+    if (!ipGeoDiv) {
+      ipGeoDiv = document.createElement('div');
+      ipGeoDiv.id = "ipGeoInfo";
+      ipGeoDiv.className = "ip-geo-info";
+      document.body.insertBefore(ipGeoDiv, document.body.firstChild.nextSibling);
+    }
+    ipGeoDiv.textContent = `🌍 IP Geolocation: ${geo.city || "N/A"}, ${geo.region || "N/A"}, ${geo.country_name || "N/A"}`;
+  } catch {
+    // Fail silently or add fallback text if desired
+  }
+}
+fetchIPGeolocation();
+
+</script>
+</body>
+</html>
